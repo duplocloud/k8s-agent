@@ -185,7 +185,7 @@ Both requests and responses use a similar structure, with `Cmds` as an array of 
 ```
 
 - If no `thread_id` is provided, a new conversation thread will be created
-- To analyze command output from commands run outside the agent, include the commands and their outputs in the `Cmds` array
+- To analyze command output from commands run outside the agent, include the commands and their outputs in the `executedCmds` array
 - In responses, the `Cmds` array contains suggested kubectl commands (with empty `Output` fields) and executed commands (with populated `Output` fields)
 
 #### Health Check API
