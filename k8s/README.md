@@ -154,7 +154,7 @@ Both requests and responses use a similar structure, with `Cmds` as an array of 
 }
 ```
 
-**Example Response with executed commands as well as suggested commands:**
+**Example Agent Response with executed commands as well as suggested commands:**
 ```json
 
 {
@@ -185,7 +185,6 @@ Both requests and responses use a similar structure, with `Cmds` as an array of 
 ```
 
 - If no `thread_id` is provided, a new conversation thread will be created
-- To execute a command, send a message with `Content` starting with `run:` followed by the kubectl command
 - To analyze command output from commands run outside the agent, include the commands and their outputs in the `Cmds` array
 - In responses, the `Cmds` array contains suggested kubectl commands (with empty `Output` fields) and executed commands (with populated `Output` fields)
 
