@@ -56,7 +56,7 @@ Both requests and responses use a similar structure, with `Cmds` as an array of 
 1. Regular question:
 ```json
 {
-  "content": "This is the user message",
+  "content": "Hello!",
   "thread_id": "optional-thread-id-for-conversation-context",
   "data": {
     "Cmds": [],
