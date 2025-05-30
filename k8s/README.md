@@ -201,11 +201,11 @@ Checks the health of the API and verifies kubectl access. You can optionally pro
 - "Check for failed pods in kube-system namespace" with custom kubeconfig and anthropic token:
 ```json
 {
-  "Content": "Check for failed pods in kube-system namespace",
+  "content": "Check for failed pods in kube-system namespace",
   "thread_id": "optional-thread-id-for-conversation-context",
-  "kubeconfig": "base64-encoded-kubeconfig-content",
   "data": {
-    "Cmds": []
+    "Cmds": [],
+    "kubeconfig": "base64-encoded-kubeconfig-content"
   }
 }
 ```
@@ -213,7 +213,7 @@ Checks the health of the API and verifies kubectl access. You can optionally pro
 - "Why is my deployment not scaling in the production namespace?" with default kubeconfig and anthropic token:
 ```json
 {
-  "Content": "Why is my deployment not scaling in the production namespace?",
+  "content": "Why is my deployment not scaling in the production namespace?",
   "thread_id": "optional-thread-id-for-conversation-context",
   "data": {
     "Cmds": []
@@ -224,11 +224,11 @@ Checks the health of the API and verifies kubectl access. You can optionally pro
 - "Show recent events in the default namespace" with custom kubeconfig and anthropic token:
 ```json
 {
-  "Content": "Show recent events in the default namespace",
+  "content": "Show recent events in the default namespace",
   "thread_id": "optional-thread-id-for-conversation-context",
-  "kubeconfig": "base64-encoded-kubeconfig-content",
   "data": {
-    "Cmds": []
+    "Cmds": [],
+    "kubeconfig": "base64-encoded-kubeconfig-content"
   }
 }
 ```
@@ -236,7 +236,7 @@ Checks the health of the API and verifies kubectl access. You can optionally pro
 - "List all pods with high restart counts" with default kubeconfig and anthropic token:
 ```json
 {
-  "Content": "List all pods with high restart counts",
+  "content": "List all pods with high restart counts",
   "thread_id": "optional-thread-id-for-conversation-context",
   "data": {
     "Cmds": []
@@ -247,11 +247,11 @@ Checks the health of the API and verifies kubectl access. You can optionally pro
 - "Diagnose why my StatefulSet is stuck" with custom kubeconfig and anthropic token:
 ```json
 {
-  "Content": "Diagnose why my StatefulSet is stuck",
+  "content": "Diagnose why my StatefulSet is stuck",
   "thread_id": "optional-thread-id-for-conversation-context",
-  "kubeconfig": "base64-encoded-kubeconfig-content",
   "data": {
-    "Cmds": []
+    "Cmds": [],
+    "kubeconfig": "base64-encoded-kubeconfig-content"
   }
 }
 ```
