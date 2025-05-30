@@ -392,7 +392,8 @@ def send_message():
 
     k8s_namespace = data.get('platform_context', {}).get('k8s_namespace')
     if not k8s_namespace:
-        return jsonify({"error": "Missing 'k8s_namespace' field in request body"}), 400
+        # return jsonify({"error": "Missing 'k8s_namespace' field in request body"}), 400
+        k8s_namespace = "Not provided"
     
     # Get or create thread with user-specific configuration
     # Check if data field exists
