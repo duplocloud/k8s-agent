@@ -47,146 +47,192 @@ This starts a Flask server on port 5002 with the following endpoints:
 
 **Endpoint:** `POST /api/sendMessage`
 
-**Request and Response Structure:**
+### How the Agent Works
 
-Both requests and responses use a similar structure, with `Cmds` as an array of objects containing `Command` and `Output` fields, nested under a `data` field. Note that requests use lowercase `content` while responses use uppercase `Content`.
+1. **Initial Request**: You send a natural language query about your Kubernetes cluster
+2. **Command Suggestions**: The agent analyzes your query and suggests appropriate kubectl commands in the `Cmds` array (with `execute: false`) 
+3. **Command Approval**: You can approve these commands by sending them back in a new request with `execute: true`
+4. **Command Execution**: The agent executes approved commands and returns results in the `executedCmds` array
+5. **Analysis**: The agent analyzes the command outputs and suggests next steps
+6. **Conversation Context**: The `thread_id` is used to maintain conversation context across multiple requests
 
-**Request Body Options:**
+### Request and Response Structure
 
-1. Regular question:
+Both requests and responses use a similar JSON structure:
+
+- Requests use lowercase `content`, responses use uppercase `Content`
+- Commands are managed through the `data` object containing `Cmds` and `executedCmds` arrays
+- The `kubeconfig` field is placed inside the `data` object
+- Each response includes a `thread_id` that should be included in subsequent requests
+
+### Example Workflow
+
+#### 1. Initial Request with Kubeconfig
+
 ```json
 {
-  "content": "Hello!",
+  "content": "List my pods in the duploservices-andy namespace",
   "thread_id": "optional-thread-id-for-conversation-context",
   "data": {
     "Cmds": [],
+    "execute_all": false,
+    "executedCmds": [],
     "kubeconfig": "base64-encoded-kubeconfig-content"
   }
 }
 ```
 
-> **Note:** The `kubeconfig` field inside the `data` object is optional. If provided, it will be used for this specific user/thread. If not provided, the system will use the default configuration. AWS credentials are automatically detected from environment variables or instance metadata when running in DuploCloud.
+> **Note:** The `kubeconfig` field inside the `data` object can be provided in the first message of the thread. It is optional. If provided, it will be used for this specific user/thread. If not provided, the system will use the default configuration. AWS credentials are automatically detected from environment variables or instance metadata when running in DuploCloud.
 
-2. Command execution (manual):
+#### 2. Agent Response with Command Suggestions
+
 ```json
 {
-  "content": "run: kubectl get pods -n kube-system",
-  "thread_id": "optional-thread-id-for-conversation-context",
-  "data": {
-    "Cmds": [],
-    "kubeconfig": "base64-encoded-kubeconfig-content"
-  }
-}
-```
-
-3. Command analysis (for commands run outside the agent):
-```json
-{
-  "content": "Please analyze this command output",
-  "thread_id": "optional-thread-id-for-conversation-context",
+  "Content": "To list pods in the duploservices-andy namespace:\n\nkubectl get pods -n duploservices-andy\n\nThis will show all pods in the duploservices-andy namespace, their status, and other basic information.",
   "data": {
     "Cmds": [
       {
-        "Command": "kubectl get pods -n kube-system",
-        "Output": "NAME                                  READY   STATUS    RESTARTS   AGE\ncoredns-5d78c9869d-q8s9h              1/1     Running   0          45d\nkube-proxy-wlqbg                      1/1     Running   0          45d"
-      }
-    ],
-    "kubeconfig": "base64-encoded-kubeconfig-content"
-  }
-}
-```
-
-4. Auto-execute all suggested commands (global execute flag):
-```json
-{
-  "content": "Check for failed pods in all namespaces",
-  "thread_id": "optional-thread-id-for-conversation-context",
-  "data": {
-    "Cmds": [],
-    "kubeconfig": "base64-encoded-kubeconfig-content",
-    "execute": true
-  }
-}
-```
-
-5. Execute specific commands only:
-```json
-{
-  "content": "Check for failed pods in all namespaces",
-  "thread_id": "optional-thread-id-for-conversation-context",
-  "data": {
-    "Cmds": [
-      {
-        "Command": "kubectl get pods --all-namespaces",
-        "Output": "",
-        "execute": true
-      },
-      {
-        "Command": "kubectl get nodes",
+        "Command": "kubectl get pods -n duploservices-andy",
         "Output": "",
         "execute": false
       }
     ],
-    "kubeconfig": "base64-encoded-kubeconfig-content"
-  }
+    "execute_all": false,
+    "executedCmds": []
+  },
+  "thread_id": "conversation-thread-id"
 }
 ```
 
-**Response:**
+#### 3. Approving Commands
+
+To approve the suggested command, send it back with `execute: true`:
+
 ```json
 {
-  "Content": "This is the message from the agent",
+  "content": "approved",
   "thread_id": "conversation-thread-id",
   "data": {
     "Cmds": [
       {
-        "Command": "kubectl get deployments -n kube-system",
+        "Command": "kubectl get pods -n duploservices-andy",
+        "Output": "",
+        "execute": true
+      }
+    ],
+    "execute_all": false,
+    "executedCmds": []
+  }
+}
+```
+
+#### 4. Agent Response with Executed Commands and Analysis
+
+```json
+{
+  "Content": "Analysis of command(s):\n\nBased on the output, there are two pods with issues:\n\n1. dummy-250527154358-865cfbb7db-9h6tm: In CrashLoopBackOff state\n2. k8s-demo-7fc788997c-pwdv6: Has CreateContainerConfigError\n\nNext steps:\n1. Check logs for the crashing pod\n2. Describe the pod with config error\n\nWould you like me to provide kubectl commands for these steps?",
+  "data": {
+    "Cmds": [
+      {
+        "Command": "kubectl logs -n duploservices-andy dummy-250527154358-865cfbb7db-9h6tm",
         "Output": "",
         "execute": false
       },
       {
-        "Command": "kubectl describe pod coredns-5d78c9869d-q8s9h -n kube-system",
+        "Command": "kubectl describe pod -n duploservices-andy k8s-demo-7fc788997c-pwdv6",
         "Output": "",
         "execute": false
+      }
+    ],
+    "executedCmds": [
+      {
+        "Command": "kubectl get pods -n duploservices-andy",
+        "Output": "NAME                                        READY   STATUS                       RESTARTS        AGE\naws-6d9f676d48-jw2gb                        1/1     Running                      0               6d18h\nchroma-vector-db-6ff6d5bf74-4dzvb           1/1     Running                      0               6d18h\ncompliance-soc2-fb8487595-nm4xq             1/1     Running                      0               6d18h\ndummy-250527154358-865cfbb7db-9h6tm         1/2     CrashLoopBackOff             873 (61s ago)   3d3h\necs-to-eks-poc-7899fccddd-hr7dd             1/1     Running                      0               79s\ngrafana-agent-7ccb67c59c-td9l7              1/1     Running                      0               6d18h\nk8s-demo-7fc788997c-pwdv6                   0/1     CreateContainerConfigError   0               3d10h\nk8s-dummy-250527160138-66db598d69-xzg4d     1/2     CrashLoopBackOff             871 (67s ago)   3d3h\nk8s-f74bcd594-52lxh                         1/1     Running                      0               6d18h\nkubernetes-agent-59f5c8d76d-gg72m           1/1     Running                      0               46h\ntest-7b568d7988-6wsz7                       1/1     Running                      0               4d21h\ntest-7b568d7988-q8kb5                       1/1     Running                      0               4d6h\nvectordb-duplo-managed-db-6655b8ccd-v8sjk   1/1     Running                      0               4d18h",
+        "execute": true
+      }
+    ]
+  },
+  "thread_id": "conversation-thread-id"
+}
+```
+
+#### 5. Sending Externally Executed Commands
+
+You can also send commands you executed yourself outside the agent:
+
+```json
+{
+  "content": "What is the issue with my pods?",
+  "thread_id": "new-thread-id",
+  "data": {
+    "Cmds": [],
+    "execute_all": false,
+    "executedCmds": [
+      {
+        "Command": "kubectl get pods -n duploservices-andy",
+        "Output": "NAME                                        READY   STATUS                       RESTARTS        AGE\naws-6d9f676d48-jw2gb                        1/1     Running                      0               6d18h\nchroma-vector-db-6ff6d5bf74-4dzvb           1/1     Running                      0               6d18h\ncompliance-soc2-fb8487595-nm4xq             1/1     Running                      0               6d18h\ndummy-250527154358-865cfbb7db-9h6tm         1/2     CrashLoopBackOff             873 (61s ago)   3d3h\necs-to-eks-poc-7899fccddd-hr7dd             1/1     Running                      0               79s\ngrafana-agent-7ccb67c59c-td9l7              1/1     Running                      0               6d18h\nk8s-demo-7fc788997c-pwdv6                   0/1     CreateContainerConfigError   0               3d10h\nk8s-dummy-250527160138-66db598d69-xzg4d     1/2     CrashLoopBackOff             871 (67s ago)   3d3h\nk8s-f74bcd594-52lxh                         1/1     Running                      0               6d18h\nkubernetes-agent-59f5c8d76d-gg72m           1/1     Running                      0               46h\ntest-7b568d7988-6wsz7                       1/1     Running                      0               4d21h\ntest-7b568d7988-q8kb5                       1/1     Running                      0               4d6h\nvectordb-duplo-managed-db-6655b8ccd-v8sjk   1/1     Running                      0               4d18h",
+        "execute": true
       }
     ]
   }
 }
 ```
 
-**Example Agent Response with executed commands as well as suggested commands:**
-```json
+#### 6. Agent Response with Analysis and Next Steps
 
+```json
 {
-    "Content": "Analysis of command(s):\n\nBased on the output, there are two pods with issues:\n\n1. dummy-250527154358-865cfbb7db-9h6tm: In CrashLoopBackOff state\n2. k8s-demo-7fc788997c-pwdv6: Has CreateContainerConfigError\n\nNext steps:\n1. Check logs for the crashing pod:\n   kubectl logs -n duploservices-andy dummy-250527154358-865cfbb7db-9h6tm\n2. Describe the pod with config error:\n   kubectl describe pod -n duploservices-andy k8s-demo-7fc788997c-pwdv6\n\nThese commands will provide more details about the issues.",
-    "data": {
-        "Cmds": [
-            {
-                "Command": "kubectl describe pod -n duploservices-andy k8s-demo-7fc788997c-pwdv6",
-                "Output": "",
-                "execute": false
-            },
-            {
-                "Command": "kubectl logs -n duploservices-andy dummy-250527154358-865cfbb7db-9h6tm",
-                "Output": "",
-                "execute": false
-            }
-        ],
-        "executedCmds": [
-            {
-                "Command": "kubectl get pods -n duploservices-andy",
-                "Output": "NAME                                        READY   STATUS                       RESTARTS          AGE\naws-6d9f676d48-jw2gb                        1/1     Running                      0                 6d17h\nchroma-vector-db-6ff6d5bf74-4dzvb           1/1     Running                      0                 6d17h\ncompliance-soc2-fb8487595-nm4xq             1/1     Running                      0                 6d17h\ndummy-250527154358-865cfbb7db-9h6tm         1/2     CrashLoopBackOff             867 (5m4s ago)    3d2h\necs-to-eks-poc-7899fccddd-bmqc8             1/1     Running                      0                 10m\ngrafana-agent-7ccb67c59c-td9l7              1/1     Running                      0                 6d17h\nk8s-demo-7fc788997c-pwdv6                   0/1     CreateContainerConfigError   0                 3d9h\nk8s-dummy-250527160138-66db598d69-xzg4d     2/2     Running                      866 (5m13s ago)   3d2h\nk8s-f74bcd594-52lxh                         1/1     Running                      0                 6d17h\nkubernetes-agent-59f5c8d76d-gg72m           1/1     Running                      0                 46h\ntest-7b568d7988-6wsz7                       1/1     Running                      0                 4d20h\ntest-7b568d7988-q8kb5                       1/1     Running                      0                 4d6h\nvectordb-duplo-managed-db-6655b8ccd-v8sjk   1/1     Running                      0                 4d17h",
-                "execute": true
-            }
-        ]
-    },
-    "thread_id": "optional-thread-id-for-conversation-context"
+  "Content": "Based on the output, there are three main issues:\n\n1. Pod \"dummy-250527154358-865cfbb7db-9h6tm\" is in CrashLoopBackOff state.\n2. Pod \"k8s-dummy-250527160138-66db598d69-xzg4d\" is also in CrashLoopBackOff state.\n3. Pod \"k8s-demo-7fc788997c-pwdv6\" has a CreateContainerConfigError.\n\nTo investigate further, we need to check the logs and describe these pods.",
+  "data": {
+    "Cmds": [
+      {
+        "Command": "kubectl logs -n duploservices-andy dummy-250527154358-865cfbb7db-9h6tm",
+        "Output": "",
+        "execute": false
+      },
+      {
+        "Command": "kubectl logs -n duploservices-andy k8s-dummy-250527160138-66db598d69-xzg4d",
+        "Output": "",
+        "execute": false
+      },
+      {
+        "Command": "kubectl describe pod -n duploservices-andy k8s-demo-7fc788997c-pwdv6",
+        "Output": "",
+        "execute": false
+      }
+    ],
+    "execute_all": false,
+    "executedCmds": []
+  },
+  "thread_id": "new-thread-id"
 }
 ```
 
-- If no `thread_id` is provided, a new conversation thread will be created
-- To analyze command output from commands run outside the agent, include the commands and their outputs in the `executedCmds` array
-- In responses, the `Cmds` array contains suggested kubectl commands (with empty `Output` fields) and executed commands (with populated `Output` fields)
+### Additional Request Options
+
+#### Using Auto-Execute for All Commands
+
+You can set `execute_all: true` to automatically execute all commands suggested by the agent:
+
+```json
+{
+  "content": "Check for failed pods in all namespaces",
+  "thread_id": "optional-thread-id",
+  "data": {
+    "Cmds": [],
+    "kubeconfig": "base64-encoded-kubeconfig-content",
+    "execute_all": true
+  }
+}
+```
+
+### Key Points
+
+- **Thread ID**: Always included in responses and should be used in subsequent requests for conversation continuity
+- **Command Approval Flow**: The agent suggests commands (`Cmds` with `execute: false`) → You approve them (set `execute: true`) → Agent executes and returns results
+- **External Command Results**: Commands executed outside the agent can be sent via the `executedCmds` array
+- **Kubeconfig**: Always include inside the `data` object, not at the top level
+- **Analysis**: The agent provides analysis of command outputs and suggests next steps
 
 #### Health Check API
 
