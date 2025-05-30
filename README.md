@@ -12,4 +12,4 @@ For detailed information about installation, configuration, and usage of the Kub
 
 ## Other Agents
 
-Other AI agent implementations are currently a work in progress. Developers looking to create their own AI agent that integrates with DuploCloud Service Desk should refer to the Kubernetes agent as a reference implementation.
+The k8s agent as well as the other AI agent implementations are currently a work in progress. Developers looking to create their own AI agent that integrates with DuploCloud Service Desk should refer to the Kubernetes agent as a reference implementation.
