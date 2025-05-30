@@ -10,6 +10,6 @@ An AI-powered agent for troubleshooting Kubernetes clusters using natural langua
 
 For detailed information about installation, configuration, and usage of the Kubernetes agent, please refer to the [Kubernetes Agent README](./k8s/README.md) in the `k8s` directory.
 
-## Other Agents
+## Developers
 
-The k8s agent as well as the other AI agent implementations are currently a work in progress. Developers looking to create their own AI agent that integrates with DuploCloud Service Desk should refer to the Kubernetes agent as a reference implementation.
+The k8s agent is currently a work in progress. If you are a developer looking to create your own AI agent that integrates with DuploCloud Service Desk, please refer to the Kubernetes agent as a reference implementation.
