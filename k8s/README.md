@@ -154,25 +154,33 @@ Both requests and responses use a similar structure, with `Cmds` as an array of 
 }
 ```
 
-**Response with executed commands:**
+**Example Response with executed commands as well as suggested commands:**
 ```json
+
 {
-  "Content": "This is the message from the agent with executed command results",
-  "thread_id": "conversation-thread-id",
-  "data": {
-    "Cmds": [
-      {
-        "Command": "kubectl get deployments -n kube-system",
-        "Output": "NAME      READY   UP-TO-DATE   AVAILABLE   AGE\ncoredns   2/2     2            2           45d",
-        "execute": true
-      },
-      {
-        "Command": "kubectl describe pod coredns-5d78c9869d-q8s9h -n kube-system",
-        "Output": "",
-        "execute": false
-      }
-    ]
-  }
+    "Content": "Analysis of command(s):\n\nBased on the output, there are two pods with issues:\n\n1. dummy-250527154358-865cfbb7db-9h6tm: In CrashLoopBackOff state\n2. k8s-demo-7fc788997c-pwdv6: Has CreateContainerConfigError\n\nNext steps:\n1. Check logs for the crashing pod:\n   kubectl logs -n duploservices-andy dummy-250527154358-865cfbb7db-9h6tm\n2. Describe the pod with config error:\n   kubectl describe pod -n duploservices-andy k8s-demo-7fc788997c-pwdv6\n\nThese commands will provide more details about the issues.",
+    "data": {
+        "Cmds": [
+            {
+                "Command": "kubectl describe pod -n duploservices-andy k8s-demo-7fc788997c-pwdv6",
+                "Output": "",
+                "execute": false
+            },
+            {
+                "Command": "kubectl logs -n duploservices-andy dummy-250527154358-865cfbb7db-9h6tm",
+                "Output": "",
+                "execute": false
+            }
+        ],
+        "executedCmds": [
+            {
+                "Command": "kubectl get pods -n duploservices-andy",
+                "Output": "NAME                                        READY   STATUS                       RESTARTS          AGE\naws-6d9f676d48-jw2gb                        1/1     Running                      0                 6d17h\nchroma-vector-db-6ff6d5bf74-4dzvb           1/1     Running                      0                 6d17h\ncompliance-soc2-fb8487595-nm4xq             1/1     Running                      0                 6d17h\ndummy-250527154358-865cfbb7db-9h6tm         1/2     CrashLoopBackOff             867 (5m4s ago)    3d2h\necs-to-eks-poc-7899fccddd-bmqc8             1/1     Running                      0                 10m\ngrafana-agent-7ccb67c59c-td9l7              1/1     Running                      0                 6d17h\nk8s-demo-7fc788997c-pwdv6                   0/1     CreateContainerConfigError   0                 3d9h\nk8s-dummy-250527160138-66db598d69-xzg4d     2/2     Running                      866 (5m13s ago)   3d2h\nk8s-f74bcd594-52lxh                         1/1     Running                      0                 6d17h\nkubernetes-agent-59f5c8d76d-gg72m           1/1     Running                      0                 46h\ntest-7b568d7988-6wsz7                       1/1     Running                      0                 4d20h\ntest-7b568d7988-q8kb5                       1/1     Running                      0                 4d6h\nvectordb-duplo-managed-db-6655b8ccd-v8sjk   1/1     Running                      0                 4d17h",
+                "execute": true
+            }
+        ]
+    },
+    "thread_id": "optional-thread-id-for-conversation-context"
 }
 ```
 
