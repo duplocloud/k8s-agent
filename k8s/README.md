@@ -1,11 +1,11 @@
 # Kubernetes AI Troubleshooting Agent
 
-An AI-powered agent for troubleshooting Kubernetes clusters using natural language queries, available as both a CLI tool and a REST API.
+An AI-powered agent for troubleshooting Kubernetes clusters using natural language queries, available as a REST API.
 
 ## Features
 
 - Natural language interface for Kubernetes troubleshooting
-- Powered by AWS Bedrock (Claude 3 Haiku) to interpret your requests
+- Powered by AWS Bedrock (Anthropic's Claude 3.5 Sonnet) to interpret your requests
 - Suggests appropriate kubectl commands based on your questions
 - Maintains conversation context for coherent troubleshooting
 - Supports namespace-specific diagnostics
@@ -15,7 +15,7 @@ An AI-powered agent for troubleshooting Kubernetes clusters using natural langua
 
 - Python 3.7+
 - kubectl configured with access to your Kubernetes cluster
-- AWS credentials with access to Bedrock (Claude 3 Haiku model must be enabled in your AWS account and region)
+- AWS credentials with access to Bedrock (Anthropic's Claude 3.5 Sonnet model must be enabled in your AWS account and region)
 
 ## Installation
 
